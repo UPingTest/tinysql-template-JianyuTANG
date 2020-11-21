@@ -71,7 +71,14 @@ func EncodeRowKeyWithHandle(tableID int64, handle int64) kv.Key {
 
 // DecodeRecordKey decodes the key and gets the tableID, handle.
 func DecodeRecordKey(key kv.Key) (tableID int64, handle int64, err error) {
-	/* Your code here */
+	if len(key) != RecordRowKeyLen {
+		return 0, 0, errors.Errorf("DecodeRecordKey error: key length mismatch")
+	}
+	_, tableID, err = codec.DecodeInt(key[1:])
+	if err != nil {
+		return 0, 0, err
+	}
+	_, handle, err = codec.DecodeInt(key[prefixLen:])
 	return
 }
 
@@ -94,7 +101,18 @@ func EncodeIndexSeekKey(tableID int64, idxID int64, encodedValue []byte) kv.Key 
 
 // DecodeIndexKeyPrefix decodes the key and gets the tableID, indexID, indexValues.
 func DecodeIndexKeyPrefix(key kv.Key) (tableID int64, indexID int64, indexValues []byte, err error) {
-	/* Your code here */
+	if len(key) < prefixLen+idLen {
+		return 0, 0, nil, errors.Errorf("DecodeIndexKeyPrefix error: key length not enough")
+	}
+	_, tableID, err = codec.DecodeInt(key[1:])
+	if err != nil {
+		return 0, 0, nil, err
+	}
+	_, indexID, err = codec.DecodeInt(key[prefixLen:])
+	if err != nil {
+		return 0, 0, nil, err
+	}
+	indexValues = key[prefixLen+idLen:]
 	return tableID, indexID, indexValues, nil
 }
 
